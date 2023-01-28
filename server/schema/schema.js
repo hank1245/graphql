@@ -72,6 +72,7 @@ const RootQuery = new GraphQLObjectType({
 const mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: {
+    // Add a client
     addClient: {
       type: ClientType,
       args: {
@@ -85,18 +86,27 @@ const mutation = new GraphQLObjectType({
           email: args.email,
           phone: args.phone,
         });
+
         return client.save();
       },
     },
+    // Delete a client
     deleteClient: {
       type: ClientType,
       args: {
-        id: { type: GraphQLNonNull(GraphQLString) },
+        id: { type: GraphQLNonNull(GraphQLID) },
       },
       resolve(parent, args) {
+        Project.find({ clientId: args.id }).then((projects) => {
+          projects.forEach((project) => {
+            project.remove();
+          });
+        });
+
         return Client.findByIdAndRemove(args.id);
       },
     },
+    // Add a project
     addProject: {
       type: ProjectType,
       args: {
@@ -122,9 +132,11 @@ const mutation = new GraphQLObjectType({
           status: args.status,
           clientId: args.clientId,
         });
+
         return project.save();
       },
     },
+    // Delete a project
     deleteProject: {
       type: ProjectType,
       args: {
@@ -134,6 +146,7 @@ const mutation = new GraphQLObjectType({
         return Project.findByIdAndRemove(args.id);
       },
     },
+    // Update a project
     updateProject: {
       type: ProjectType,
       args: {
@@ -149,7 +162,6 @@ const mutation = new GraphQLObjectType({
               completed: { value: "Completed" },
             },
           }),
-          defaultValue: "Not Started",
         },
       },
       resolve(parent, args) {
@@ -159,7 +171,7 @@ const mutation = new GraphQLObjectType({
             $set: {
               name: args.name,
               description: args.description,
-              sttaus: args.status,
+              status: args.status,
             },
           },
           { new: true }
